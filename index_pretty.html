@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Boston Neighborhood Map</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+	<link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+	<link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="dist/lib/bootstrap.min.css" />
+    <link rel="stylesheet" href="dist/lib/jquery-ui.min.css">
+    <link rel="stylesheet" href="dist/lib/roundslider.min.css" />
+    <link rel="stylesheet" href="dist/css/appstyles.min.css" />
+
+    <script src="dist/lib/jquery.min.js"></script>
+    <script src="dist/lib/jquery-ui.min.js"></script>
+    <script src="dist/lib/roundslider.min.js"></script>
+
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB5QbX4Ei0_4tAvpRTgg2vp2WJZ6-GgJy0&libraries=places"></script>
+    <script src="dist/lib/infobubble.min.js"></script>
+
+</head>
+
+<body>
+
+    <div class="wrapper">
+		<div id="map-canvas"></div>
+		<div id="combined-menu-toggle">
+        <div class="menu-main" role="menu">
+
+            <span id="project-title">Boston Exercise Meetups</span>
+          
+            <!-- Search Filter -->
+            <div class="search-form">
+                <input id="search-input" data-bind="textInput:query" placeholder="Search by meetup venue..." autofocus />
+                <p id="search-summary">
+                    <span data-bind="text: numGroups"></span> exercise venues
+                </p>
+            </div>
+            <!-- /Search Filter -->
+
+            <!-- Search Time Frame -->
+            <div id="search-radius-container">
+                <div id="slider" style="margin: 10px" data-bind="slider: numWeeks, sliderOptions: {min: 1, max: 6, range: 'min', step: 1}"></div>
+                <div id="numWeeks" data-bind="text: numWeeks, valueUpdate: 'afterkeydown'"></div>
+                <div id="word-weeks">&nbspweeks </div>
+            </div>
+            <!-- /Search Time Frame -->
+
+            <!-- Filtered List -->
+            <div>
+                <ul data-bind="foreach: {data: filteredList, as: 'venueloc'}" id="list">
+                    <li data-bind="click: $root.selectVenueLoc" class="venue-info">
+                        <span class="venue-name" data-bind="text: name"></span>
+                        <div class="meetup-info">
+                            <span data-bind="text: meetups().length"></span> EV
+                        </div>
+                    </li>
+					</ul>
+            </div>
+    </div>
+	
+	        <!-- /Filtered List -->
+	<div id="menu-toggle"><span class="fontawesome-chevron-left"></span></div>
+	<div id="menu-toggle-smallscreen"><span class="fontawesome-chevron-up"></span></div>
+	</div>
+
+    <!-- Search Radius -->
+	<div id="distance-control">
+        <div id="radius-slider" data-bind="slider2: radius"></div>
+        <span id="dist-units"> miles</span>
+    </div>
+    <!-- /Search Radius -->
+	
+	</div>
+
+    <!--<script src="lib/jquery-2.1.3.min.js"></script>-->
+    <script src="dist/lib/bootstrap.min.js"></script>
+    <script src="dist/lib/knockout-3.2.0.min.js"></script>
+    <script src="dist/js/app.min.js"></script>
+    <script src="dist/js/radius.min.js"></script>
+	<script src="dist/js/menuslide.min.js"></script>
+    <script>
+        $(window).resize(function() {
+            var h = $('.wrapper').height();
+            $('#map-canvas').css('height', h);
+        }).resize();
+    </script>
+</body>
+</html>
