@@ -18,18 +18,33 @@ Go to my Github page and clone "Neighborhood_Map" repository: https://github.com
 src: expanded working files with comments
 dist: production ready outputfiles after running grunt -- minified html/css, uglified js
 
-####Open application on local server:
+####Setting up my local server:
 ----------------------------
 1.) Install python and open the command line
 
 $> cd /path/to/your-project-folder
-$> python -m SimpleHTTPServer 8000
+$> python -m SimpleHTTPServer 8080
 
-2.) Point web browser to http://localhost:8000/
+2.) Setup Grunt environment to optimize files (uglify JavaScript, minify/concatenate css
+Install NodeJS and install the gruntCLI to get the grunt command line interface.
+
+npm install -g grunt-cli 
+
+3.) Create a package.json file, which is a special file that node uses to track dependencies on a project.
+
+$> npm  init
+
+4.) Add grunt as one of our developer dependencies. 
+
+$> npm install --save-dev grunt
+
+5.) Set up Gruntfile.js
+
+$> npm install grunt-contrib-clean grunt-contrib-copy grunt-contrib-uglify grunt-contrib-htmlmin grunt-contrib-cssmin --save-dev
+
 
 ####Run application from my website:
 ----------------------------
-
 Point browser to: christensen-michael.com/Neighborhood_Map
 
 ####Resources:
@@ -48,12 +63,15 @@ JS
 | http://stackoverflow.com/questions/19590865/from-an-array-of-objects-extract-value-of-a-property-as-array  
 | http://stackoverflow.com/questions/9548859/how-do-you-increment-a-knockout-js-observable (incrementing ko observable)  
 | http://stackoverflow.com/questions/15310659/using-chrome-console-to-access-knockout-viewmodel-with-requirejs  
+| http://stackoverflow.com/questions/14687237/google-maps-api-async-loading  
 
 Google Maps API
 ---------------
 | https://mapstyle.withgoogle.com/  
 | https://developers.google.com/maps/documentation/javascript/controls  
 | https://github.com/googlemaps/js-info-bubble  
+| https://developers.google.com/maps/documentation/javascript/examples/map-simple  
+| https://developers.google.com/maps/documentation/javascript/reference  
 
 GitHub Repositories
 -------------------

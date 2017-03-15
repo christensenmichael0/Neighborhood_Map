@@ -14,7 +14,6 @@
     "grunt-contrib-htmlmin": "^2.2.0",
     "grunt-contrib-uglify": "^2.0.0",
     "grunt-contrib-watch": "^1.0.0",
-    "grunt-inline": "^0.3.6",
     "jsdoc": "^3.3.3"
   },
   "scripts": {

@@ -1,8 +1,10 @@
+"use strict";
+
 // signed url from meetup api, taken from https://secure.meetup.com/meetup_api/console/?path=/2/open_events
 var meetupApiUrl = 'https://api.meetup.com/2/open_events?and_text=False&offset=0&format=json&lon=-71.0589&limited_events=False&photo-host=public&page=100&radius=30&category=9&lat=42.3601&status=upcoming&desc=False&sig_id=35254712&sig=7e6d98b3125f607299e60bca0ba88f3aa7d483e2';
 var dateObj = new Date();
 var presentTime = dateObj.getTime();
-var oneDay = 86400000;
+var ONEDAY = 86400000;
 var cityCenter = [42.3601, -71.0589];
 
 
@@ -50,7 +52,7 @@ var VenueLocation = function(venueObject, map) {
 
     self.location = ko.computed(function() {
         // instantiate a google maps coordinate if lat/lon are numeric
-        if (isNumeric(self.lat) && isNumeric(self.lon)) {
+        if (isNumeric(self.lat) && isNumeric(self.lon) && self.lat !== 0 && self.lon !== 0) {
             return new google.maps.LatLng(self.lat, self.lon);
         } else {
             return null;
@@ -60,7 +62,7 @@ var VenueLocation = function(venueObject, map) {
 
     // grab venue id and name
     self.id = venueObject.id;
-    self.name = ko.observable(venueObject.name.firstLetterUpperCase());
+    self.name = venueObject.name.firstLetterUpperCase();
 
     // initialize empty meetup array to be filled if multiple meetups for one venue
     self.meetups = ko.observableArray([]);
@@ -85,18 +87,18 @@ var VenueLocation = function(venueObject, map) {
     self.formattedMeetupList = function() {
         var meetupSubstring = '<ol class="info-window-list">';
         self.meetups().forEach(function(meetup) {
-            meetupSubstring += '<li class="info-window-list-items">' + '<div class="primary-info"><b>Group:</b> ' + meetup.group() + '</div>' +
-                '<div class="primary-info"><b>Event:</b> ' + '<a href="' + meetup.url() + '">' + meetup.name() +
-                '</a>' + '</div>' + '<div class="primary-info"><b>Date:</b> ' + meetup.date() + '</div>' +
-                '<div class="primary-info"><b>Attending:</b> ' + meetup.attending() + '</div>' +
+            meetupSubstring += '<li class="info-window-list-items">' + '<div class="primary-info"><b>Group:</b> ' + meetup.group + '</div>' +
+                '<div class="primary-info"><b>Event:</b> ' + '<a href="' + meetup.url + '">' + meetup.name +
+                '</a>' + '</div>' + '<div class="primary-info"><b>Date:</b> ' + meetup.date + '</div>' +
+                '<div class="primary-info"><b>Attending:</b> ' + meetup.attending + '</div>' +
                 '<div class="primary-info"><b>Description:</b></div>' +
-                '<div class="meetup-descrip">' + meetup.description() + '</div>' +
+                '<div class="meetup-descrip">' + meetup.description + '</div>' +
                 '</li>';
         });
         meetupSubstring += '</ol>';
 
         return '<div class="info-window-content">' +
-            '<span class="info-window-header">' + self.name() + '</span>' +
+            '<span class="info-window-header">' + self.name + '</span>' +
             meetupSubstring +
             '</div>';
     };
@@ -112,28 +114,26 @@ var Meetup = function(meetup) {
     // attach venue object
     self.venueObject = meetup.venue;
 
-    self.id = ko.observable(meetup.id);
-    self.name = ko.observable(meetup.name.toUpperCase());
-    self.venueName = ko.observable(meetup.venue.name); //fixed
-    self.group = ko.observable(meetup.group.name);
-    self.attending = ko.observable(meetup.yes_rsvp_count);
-    self.description = ko.observable(meetup.description);
-    self.distance = ko.observable(meetup.distance);
-    self.url = ko.observable(meetup.event_url);
+    self.id = meetup.id;
+    self.name = meetup.name.toUpperCase();
+    self.venueName = meetup.venue.name; //fixed
+    self.group = meetup.group.name;
+    self.attending = meetup.yes_rsvp_count;
+    self.description = meetup.description;
+    self.distance = meetup.distance;
+    self.url = meetup.event_url;
 
-    if (self.description() === null) {
-        self.description = ko.observable('None Available');
+    if (self.description == null) {
+        self.description = 'None Available';
     }
 
     self.milliseconds = meetup.time; //milliseconds since Jan 1, 1970 00:00:00 UTC
     self.date = new Date(self.milliseconds);
-    self.numDayDif = (meetup.time - presentTime) / oneDay;
-    self.numWeekDif = Math.floor((meetup.time - presentTime) / (7 * oneDay));
+    self.numDayDif = (meetup.time - presentTime) / ONEDAY;
+    self.numWeekDif = Math.floor((meetup.time - presentTime) / (7 * ONEDAY));
 
     // converts milliseconds date to a more readable form
-    self.date = ko.computed(function() {
-        return self.date.toLocaleDateString();
-    });
+    self.date = self.date.toLocaleDateString();
 
 };
 
@@ -342,7 +342,7 @@ var GoogleMap = function(center, element) {
     };
 
     // assign a google maps element
-    map = new google.maps.Map(element, mapOptions);
+    var map = new google.maps.Map(element, mapOptions);
 
     // apply custom map styling
     var styledMapOptions = {};
@@ -362,18 +362,34 @@ var ViewModel = function() {
 
     self.radius = ko.observable(5);
 
+    // call this function if google maps api isn't working properly
+    function noGoogleMapsAPI() {
+        $('.search-summary').text("Unable to load Google Maps API");
+        $('.word-weeks').css("display", "none");
+        $('.meetup-info').css("display", "none");
+        $('.distance-control').css("display","none");
+    }
+
+    // make sure google maps is working.. give it 5 seconds to check for the objects
+    setTimeout(function() {
+        try {
+            if (typeof google !== 'object' || typeof google.maps !== 'object') {
+                noGoogleMapsAPI();
+            }
+
+        } catch (e) {
+            noGoogleMapsAPI();
+        }
+    }, 5000);
+
+
     var map,
-        mapCanvas = $('#map-canvas')[0],
-        center = new google.maps.LatLng(cityCenter[0],cityCenter[1]);
+        mapCanvas = $('.map-canvas')[0],
+        center = new google.maps.LatLng(cityCenter[0], cityCenter[1]);
 
     function initialize() {
         map = GoogleMap(center, mapCanvas);
         fetchMeetups(meetupApiUrl);
-    }
-
-    // make sure google maps is working
-    if (typeof google !== 'object' || typeof google.maps !== 'object') {
-        $('#search-summary').text("Unable to load Google Maps API");
     }
 
     // google map marker tooltip
@@ -398,15 +414,15 @@ var ViewModel = function() {
     // list of meetups, not currently used in view
     self.meetupList = ko.observableArray([]);
 
-    // list of group locations, bound to `#list`
+    // list of group locations, bound to `.list`
     self.venueLocList = ko.observableArray([]);
 
-    // number of group locations, bound to `#search-summary p`
+    // number of group locations, bound to `.search-summary p`
     self.numGroups = ko.observable(0);
 
     self.numMeetups = ko.observableArray([]);
 
-    // bound to `#search-input` search box
+    // bound to `.search-input` search box
     self.query = ko.observable('');
 
     // filter the data based on time,distance,query name
@@ -425,12 +441,14 @@ var ViewModel = function() {
             venueloc.marker.setMap(map);
         });
 
+        fitBoundsToVisibleMarkers();
+
         self.numGroups(self.venueLocList().length);
         return self.venueLocList();
     });
 
 
-    /* triggered when a group location in `#list` is clicked or a marker is clicked
+    /* triggered when a group location in `.list` is clicked or a marker is clicked
      
      Grabs from marker/infobubble data and animate markers
      * @param {object} venueloc 
@@ -485,9 +503,21 @@ var ViewModel = function() {
 
             // if failed
         }).fail(function(response, status, error) {
-            $('#search-summary').text('Unable to load Meetup data...');
+            //$('.search-summary').text('Unable to load Meetup data...');
         });
     }
+
+    function fitBoundsToVisibleMarkers() {
+
+        var bounds = new google.maps.LatLngBounds();
+        self.venueLocList().forEach(function(venueloc) {
+            bounds.extend(venueloc.marker.getPosition());
+        });
+        if (typeof map !== 'undefined') {
+            map.fitBounds(bounds);
+        }
+    }
+
 
     /* check to see if a venue id already exists
      * @param {integer} venueID 
@@ -527,8 +557,8 @@ var ViewModel = function() {
         // loop through meetup list
         self.meetupList().forEach(function(meetup) {
             // check if meetup object has a valid venue id 
-            if (meetup.distance() < self.radius() && meetup.numWeekDif < self.numWeeks() &&
-                meetup.venueName().toLowerCase().contains(self.query().toLowerCase())) {
+            if (meetup.distance < self.radius() && meetup.numWeekDif < self.numWeeks() &&
+                meetup.venueName.toLowerCase().contains(self.query().toLowerCase())) {
 
                 var venueloc;
                 var id = meetup.venueObject.id;
