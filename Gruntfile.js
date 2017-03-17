@@ -18,6 +18,7 @@ module.exports = function(grunt) {
       js: {
         files: {
 		  'dist/js/app.min.js': 'src/js/app.js',
+      'dist/js/mapElementStyles.min.js': 'src/js/mapElementStyles.js',
 		  'dist/js/radius.min.js': 'src/js/radius.js',
       'dist/js/menuslide.min.js': 'src/js/menuslide.js',
 		  'dist/lib/infobubble.min.js': 'src/lib/infobubble.js',

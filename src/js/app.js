@@ -7,6 +7,38 @@ var presentTime = dateObj.getTime();
 var ONEDAY = 86400000;
 var cityCenter = [42.3601, -71.0589];
 
+// Initialize Google Maps when the library is asynchronously loaded to avoid unexpected errors
+var map, mapCanvas, center, infoWindow;
+
+function initMap() {
+    console.log('initializing map');
+    mapCanvas = $('.map-canvas')[0],
+        center = new google.maps.LatLng(cityCenter[0], cityCenter[1]);
+    map = GoogleMap(center, mapCanvas);
+
+    infoWindow = new InfoBubble({
+        map: map,
+        content: '',
+        shadowStyle: 1,
+        padding: 0,
+        backgroundColor: '#ffffe6',
+        borderRadius: 5,
+        maxWidth: 300,
+        maxHeight: 250,
+        arrowSize: 10,
+        borderWidth: 1,
+        borderColor: '#000000',
+        arrowPosition: 25,
+        arrowStyle: 2,
+    });
+}
+
+/* Handle Google Map API failure */
+function googleFail() {
+    $('.distance-control').css("display", "none");
+    $('.menu-main').append("<div class='load-fail'>Unable to load Google Maps API</div>");
+}
+
 
 /* Extend the String class by adding a firstLetterUpperCase method */
 String.prototype.firstLetterUpperCase = function() {
@@ -141,191 +173,7 @@ var Meetup = function(meetup) {
 var GoogleMap = function(center, element) {
     var self = this;
 
-    //my custom styles
-    var roadAtlasStyles = [{
-            "elementType": "geometry",
-            "stylers": [{
-                "color": "#f5f5f5"
-            }]
-        },
-        {
-            "elementType": "labels.icon",
-            "stylers": [{
-                "visibility": "off"
-            }]
-        },
-        {
-            "elementType": "labels.text.fill",
-            "stylers": [{
-                "color": "#616161"
-            }]
-        },
-        {
-            "elementType": "labels.text.stroke",
-            "stylers": [{
-                "color": "#f5f5f5"
-            }]
-        },
-        {
-            "featureType": "administrative.land_parcel",
-            "elementType": "labels",
-            "stylers": [{
-                "visibility": "off"
-            }]
-        },
-        {
-            "featureType": "administrative.land_parcel",
-            "elementType": "labels.text.fill",
-            "stylers": [{
-                "color": "#bdbdbd"
-            }]
-        },
-        {
-            "featureType": "landscape.natural.landcover",
-            "elementType": "geometry.fill",
-            "stylers": [{
-                    "color": "#80ff80"
-                },
-                {
-                    "visibility": "on"
-                }
-            ]
-        },
-        {
-            "featureType": "landscape.natural.terrain",
-            "elementType": "geometry.fill",
-            "stylers": [{
-                    "color": "#b0b0ff"
-                },
-                {
-                    "visibility": "on"
-                }
-            ]
-        },
-        {
-            "featureType": "poi",
-            "elementType": "geometry",
-            "stylers": [{
-                "color": "#eeeeee"
-            }]
-        },
-        {
-            "featureType": "poi",
-            "elementType": "labels.text",
-            "stylers": [{
-                "visibility": "off"
-            }]
-        },
-        {
-            "featureType": "poi",
-            "elementType": "labels.text.fill",
-            "stylers": [{
-                "color": "#757575"
-            }]
-        },
-        {
-            "featureType": "poi.park",
-            "elementType": "geometry",
-            "stylers": [{
-                "color": "#e5e5e5"
-            }]
-        },
-        {
-            "featureType": "poi.park",
-            "elementType": "labels.text.fill",
-            "stylers": [{
-                "color": "#9e9e9e"
-            }]
-        },
-        {
-            "featureType": "road",
-            "elementType": "geometry",
-            "stylers": [{
-                "color": "#ffffff"
-            }]
-        },
-        {
-            "featureType": "road.arterial",
-            "elementType": "labels.text.fill",
-            "stylers": [{
-                "color": "#757575"
-            }]
-        },
-        {
-            "featureType": "road.highway",
-            "elementType": "geometry",
-            "stylers": [{
-                "color": "#dadada"
-            }]
-        },
-        {
-            "featureType": "road.highway",
-            "elementType": "labels.text.fill",
-            "stylers": [{
-                "color": "#616161"
-            }]
-        },
-        {
-            "featureType": "road.local",
-            "elementType": "labels",
-            "stylers": [{
-                "visibility": "off"
-            }]
-        },
-        {
-            "featureType": "road.local",
-            "elementType": "labels.text.fill",
-            "stylers": [{
-                "color": "#9e9e9e"
-            }]
-        },
-        {
-            "featureType": "transit.line",
-            "elementType": "geometry",
-            "stylers": [{
-                "color": "#e5e5e5"
-            }]
-        },
-        {
-            "featureType": "transit.station",
-            "elementType": "geometry",
-            "stylers": [{
-                "color": "#eeeeee"
-            }]
-        },
-        {
-            "featureType": "water",
-            "elementType": "geometry",
-            "stylers": [{
-                "color": "#c9c9c9"
-            }]
-        },
-        {
-            "featureType": "water",
-            "elementType": "geometry.fill",
-            "stylers": [{
-                    "color": "#83eafc"
-                },
-                {
-                    "visibility": "on"
-                }
-            ]
-        },
-        {
-            "featureType": "water",
-            "elementType": "geometry.stroke",
-            "stylers": [{
-                    "color": "#83eafc"
-                },
-                {
-                    "visibility": "on"
-                },
-                {
-                    "weight": 2
-                }
-            ]
-        }
-    ];
+    //var roadAtlasStyles defined mapElementStyles in js/mapElementStyles.js
 
     var mapOptions = {
         zoom: 9,
@@ -358,58 +206,16 @@ var GoogleMap = function(center, element) {
 var ViewModel = function() {
     var self = this;
 
+    self.closeMenu = ko.observable(false);
+
+    self.clickToggle = function() {
+        self.closeMenu(!self.closeMenu());
+    };
+
+
     self.numWeeks = ko.observable(2);
 
     self.radius = ko.observable(5);
-
-    // call this function if google maps api isn't working properly
-    function noGoogleMapsAPI() {
-        $('.search-summary').text("Unable to load Google Maps API");
-        $('.word-weeks').css("display", "none");
-        $('.meetup-info').css("display", "none");
-        $('.distance-control').css("display","none");
-    }
-
-    // make sure google maps is working.. give it 5 seconds to check for the objects
-    setTimeout(function() {
-        try {
-            if (typeof google !== 'object' || typeof google.maps !== 'object') {
-                noGoogleMapsAPI();
-            }
-
-        } catch (e) {
-            noGoogleMapsAPI();
-        }
-    }, 5000);
-
-
-    var map,
-        mapCanvas = $('.map-canvas')[0],
-        center = new google.maps.LatLng(cityCenter[0], cityCenter[1]);
-
-    function initialize() {
-        map = GoogleMap(center, mapCanvas);
-        fetchMeetups(meetupApiUrl);
-    }
-
-    // google map marker tooltip
-
-    var infoWindow = new InfoBubble({
-        map: map,
-        content: '',
-        shadowStyle: 1,
-        padding: 0,
-        backgroundColor: '#ffffe6',
-        borderRadius: 5,
-        maxWidth: 300,
-        maxHeight: 250,
-        arrowSize: 10,
-        borderWidth: 1,
-        borderColor: '#000000',
-        arrowPosition: 25,
-        arrowStyle: 2,
-    });
-
 
     // list of meetups, not currently used in view
     self.meetupList = ko.observableArray([]);
@@ -441,7 +247,11 @@ var ViewModel = function() {
             venueloc.marker.setMap(map);
         });
 
-        fitBoundsToVisibleMarkers();
+        //Make sure the google and google.maps objects are availabe before trying to fit markers to bounds
+        if (typeof google !== "undefined" && typeof google.maps !== "undefined") {
+            fitBoundsToVisibleMarkers();
+        }
+
 
         self.numGroups(self.venueLocList().length);
         return self.venueLocList();
@@ -484,7 +294,7 @@ var ViewModel = function() {
         $.ajax({
             type: "GET",
             url: url,
-            timeout: 10000,
+            timeout: 5000,
             contentType: "application/json",
             dataType: "jsonp",
             cache: false,
@@ -503,13 +313,17 @@ var ViewModel = function() {
 
             // if failed
         }).fail(function(response, status, error) {
-            //$('.search-summary').text('Unable to load Meetup data...');
+            $('.menu-main').append("<div class='load-fail'>Unable to load Meetup data</div>");
         });
     }
 
-    function fitBoundsToVisibleMarkers() {
+    // fetch the meetups
+    fetchMeetups(meetupApiUrl);
 
-        var bounds = new google.maps.LatLngBounds();
+    var bounds;
+
+    function fitBoundsToVisibleMarkers() {
+        bounds = new google.maps.LatLngBounds();
         self.venueLocList().forEach(function(venueloc) {
             bounds.extend(venueloc.marker.getPosition());
         });
@@ -595,10 +409,8 @@ var ViewModel = function() {
             }
         });
     }
-
-    // initialization listener
-    google.maps.event.addDomListener(window, 'load', initialize);
 };
+
 //normal slider
 ko.bindingHandlers.slider = {
     init: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
@@ -640,6 +452,41 @@ ko.bindingHandlers.slider2 = {
         var value = ko.utils.unwrapObservable(valueAccessor());
         if (isNaN(value)) value = 0;
         $(element).roundSlider("value", value);
+    }
+};
+
+var slideDistance, slideDistanceSmall;
+
+ko.bindingHandlers.shiftVisible = {
+    update: function(element, valueAccessor) {
+        var value = valueAccessor();
+
+        //console.log(windowInnerWidth);
+        if (window.innerWidth > 700) {
+            slideDistance = $('.menu-main').outerWidth();
+
+            ko.unwrap(value) ? $(element).animate({
+                'left': '-' + slideDistance + 'px'
+            }, 1000, function() {
+                $('.menu-toggle').html('<span class="fontawesome-chevron-right"></span>');
+            }) : $('.combined-menu-toggle').animate({
+                'left': '0px'
+            }, 1000, function() {
+                $('.menu-toggle').html('<span class="fontawesome-chevron-left"></span>');
+            });
+        } else {
+            slideDistanceSmall = $('.menu-main').outerHeight();
+
+            ko.unwrap(value) ? $(element).animate({
+                'top': '-' + slideDistanceSmall + 'px'
+            }, 1000, function() {
+                $('.menu-toggle-smallscreen').html('<span class="fontawesome-chevron-down"></span>');
+            }) : $('.combined-menu-toggle').animate({
+                'top': '0px'
+            }, 1000, function() {
+                $('.menu-toggle-smallscreen').html('<span class="fontawesome-chevron-up"></span>');
+            });
+        }
     }
 };
 
